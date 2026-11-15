@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>陪自习的小鲸鱼</title>
+<style>
+:root{--deep:#08161f;--mid:#0e2c3d;--sea:#5ad1d8;--ink:#dff1f6;--dim:#7fa6b8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:linear-gradient(180deg,#07141d 0%,#0c2b3c 55%,#10465c 100%);color:var(--ink);font-family:-apple-system,"Noto Sans SC","PingFang SC",sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;user-select:none}
+.bubbles{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.bubbles i{position:absolute;bottom:-40px;width:10px;height:10px;border-radius:50%;background:rgba(160,230,240,.22);animation:rise linear infinite}
+@keyframes rise{0%{transform:translateY(0) scale(.6);opacity:0}15%{opacity:1}100%{transform:translateY(-110vh) scale(1.1);opacity:0}}
+.stage{position:relative;width:min(88vw,380px);display:flex;justify-content:center;margin-top:-10px}
+.whale{width:100%;height:auto;animation:bob 4.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-10px) rotate(1.5deg)}}
+.tail-up{transform-origin:68px 85px;animation:sway 2.6s ease-in-out infinite}
+.tail-dn{transform-origin:68px 85px;animation:sway 2.6s ease-in-out infinite reverse}
+@keyframes sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(7deg)}}
+.fin{transform-origin:148px 138px;animation:fin 3.4s ease-in-out infinite}
+@keyframes fin{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(5deg)}}
+.spout circle{animation:spout 3.2s ease-in-out infinite}
+.spout circle:nth-child(2){animation-delay:.25s}
+.spout circle:nth-child(3){animation-delay:.5s}
+@keyframes spout{0%{opacity:0;transform:translateY(6px)}35%{opacity:.9}100%{opacity:0;transform:translateY(-16px)}}
+.time{font-size:clamp(46px,15vw,64px);font-weight:300;letter-spacing:2px;font-variant-numeric:tabular-nums;margin:6px 0 0}
+.state{font-size:13px;color:var(--dim);min-height:20px;margin-top:4px;letter-spacing:1px}
+.say{font-size:13px;color:var(--sea);min-height:20px;margin-top:10px;text-align:center;padding:0 24px;line-height:1.6}
+.btns{display:flex;gap:10px;margin-top:16px}
+button{padding:11px 22px;border-radius:999px;border:1px solid #27566a;background:rgba(18,52,68,.7);color:var(--ink);font-size:14px}
+button:active{background:#1b455a}
+button.main{background:#1f6f7c;border-color:#2f9aa8;color:#eafcff}
+.days{font-size:12px;color:var(--dim);margin-top:18px;text-align:center;line-height:1.7}
+.days b{color:var(--sea);font-weight:600}
+.panel{display:none;margin-top:14px;padding:14px 16px;border:1px solid #27566a;border-radius:16px;background:rgba(10,32,44,.88);width:min(88vw,340px)}
+.panel.on{display:block}
+.panel .row{display:flex;align-items:center;justify-content:space-between;margin:8px 0;font-size:13px;color:var(--dim)}
+.panel input{width:74px;padding:8px 9px;border-radius:9px;border:1px solid #27566a;background:#0f3346;color:var(--ink);font-size:15px;text-align:center;outline:none}
+.panel input:focus{border-color:var(--sea)}
+.panel .btns{margin-top:12px}
+</style>
+</head>
+<body>
+<div class="bubbles">
+  <i style="left:8%;width:8px;height:8px;animation-duration:11s;animation-delay:0s"></i>
+  <i style="left:22%;width:12px;height:12px;animation-duration:14s;animation-delay:2s"></i>
+  <i style="left:41%;width:7px;height:7px;animation-duration:10s;animation-delay:4s"></i>
+  <i style="left:63%;width:14px;height:14px;animation-duration:16s;animation-delay:1s"></i>
+  <i style="left:78%;width:9px;height:9px;animation-duration:12s;animation-delay:5s"></i>
+  <i style="left:91%;width:11px;height:11px;animation-duration:15s;animation-delay:3s"></i>
+</div>
+
+<div class="stage">
+<svg class="whale" viewBox="0 0 260 160" aria-label="小鲸鱼">
+  <g class="spout" fill="#bff3f8">
+    <circle cx="176" cy="6" r="4"/>
+    <circle cx="164" cy="12" r="3"/>
+    <circle cx="188" cy="12" r="3"/>
+  </g>
+  <path class="tail-up" d="M70 82 C58 62 40 48 28 52 C34 70 48 82 66 85 Z" fill="#8fd9e3" stroke="#2b6f7c" stroke-width="3" stroke-linejoin="round"/>
+  <path class="tail-dn" d="M70 88 C58 108 40 122 28 118 C34 100 48 88 66 85 Z" fill="#8fd9e3" stroke="#2b6f7c" stroke-width="3" stroke-linejoin="round"/>
+  <ellipse cx="150" cy="85" rx="88" ry="57" fill="#a7e3ee" stroke="#2b6f7c" stroke-width="4"/>
+  <path d="M68 102 C92 136 208 136 234 98 C224 128 190 141 150 141 C110 141 76 128 68 102 Z" fill="#ecfdff"/>
+  <path class="fin" d="M142 130 C136 141 140 147 147 147 C153 147 156 141 156 134 Z" fill="#8fd9e3" stroke="#2b6f7c" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="190" cy="72" r="8" fill="#123a45"/>
+  <circle cx="192.6" cy="69" r="2.8" fill="#fff"/>
+  <path d="M200 95 Q212 102 224 95" stroke="#2b6f7c" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+  <path d="M96 62 C108 48 126 44 138 50" stroke="#7fd0dd" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>
+</svg>
+</div>
+
+<div class="time" id="time">25:00</div>
+<div class="state" id="state">等着你坐下</div>
+<div class="say" id="say"></div>
+<div class="btns">
+  <button class="main" id="go">开始</button>
+  <button id="reset">重置</button>
+  <button id="edit">时长</button>
+</div>
+<div class="panel" id="panel">
+  <div class="row"><span>专注（分钟）</span><input type="number" id="inWork" min="1" max="180" step="1" inputmode="numeric"></div>
+  <div class="row"><span>休息（分钟）</span><input type="number" id="inBreak" min="1" max="60" step="1" inputmode="numeric"></div>
+  <div class="btns">
+    <button class="main" id="ok">就这样</button>
+    <button id="cancel">取消</button>
+  </div>
+</div>
+<div class="days" id="days"></div>
+
+<script>
+(function(){
+  var workMin=parseInt(localStorage.getItem('lxwhalework'),10)||25;
+  var breakMin=parseInt(localStorage.getItem('lxwhalebreak'),10)||5;
+  if(workMin<1||workMin>180)workMin=25;
+  if(breakMin<1||breakMin>60)breakMin=5;
+  var total=workMin*60, left=total, running=false, timer=null, mode='work';
+  var timeEl=document.getElementById('time'), stateEl=document.getElementById('state'),
+      sayEl=document.getElementById('say'), goEl=document.getElementById('go'),
+      resetEl=document.getElementById('reset'), daysEl=document.getElementById('days'),
+      editEl=document.getElementById('edit'), panelEl=document.getElementById('panel'),
+      inWork=document.getElementById('inWork'), inBreak=document.getElementById('inBreak'),
+      okEl=document.getElementById('ok'), cancelEl=document.getElementById('cancel');
+
+  function pad(n){return n<10?('0'+n):(''+n);}
+  function show(){
+    timeEl.textContent=pad(Math.floor(left/60))+':'+pad(left%60);
+  }
+  function say(t){sayEl.textContent=t||'';}
+
+  function todayKey(){var d=new Date();return 'lxwhale-'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+  function getCount(){return +(localStorage.getItem(todayKey())||0);}
+  function showDays(){
+    var c=getCount();
+    daysEl.innerHTML='今天陪了你 <b>'+(c||0)+'</b> 段';
+  }
+
+  function chime(){
+    try{
+      var C=window.AudioContext||window.webkitAudioContext; if(!C)return;
+      var ac=new C(), now=ac.currentTime;
+      [660,880,990].forEach(function(f,i){
+        var o=ac.createOscillator(), g=ac.createGain();
+        o.type='sine'; o.frequency.value=f;
+        g.gain.setValueAtTime(0,now+i*0.18);
+        g.gain.linearRampToValueAtTime(0.18,now+i*0.18+0.03);
+        g.gain.exponentialRampToValueAtTime(0.001,now+i*0.18+0.5);
+        o.connect(g); g.connect(ac.destination);
+        o.start(now+i*0.18); o.stop(now+i*0.18+0.55);
+      });
+      setTimeout(function(){try{ac.close();}catch(e){}},1600);
+    }catch(e){}
+  }
+
+  function finish(){
+    running=false; clearInterval(timer); timer=null;
+    goEl.textContent='开始';
+    chime();
+    if(mode==='work'){
+      localStorage.setItem(todayKey(), getCount()+1);
+      showDays();
+      stateEl.textContent='这一段坐完了';
+      say('起身走两步，喝口水，'+breakMin+' 分钟后再来。');
+      mode='break'; total=breakMin*60; left=total; show();
+    }else{
+      stateEl.textContent='歇够了';
+      say('回来吧，我把水放好了。');
+      mode='work'; total=workMin*60; left=total; show();
+    }
+  }
+
+  function tick(){
+    left--;
+    show();
+    if(left<=0)finish();
+  }
+
+  function start(){
+    if(running){
+      running=false; clearInterval(timer); timer=null;
+      goEl.textContent='继续'; stateEl.textContent='歇一会儿';
+      return;
+    }
+    if(left<=0){left=total;}
+    running=true;
+    goEl.textContent='暂停';
+    stateEl.textContent=(mode==='work'?'安静坐着':'歇着');
+    say('');
+    timer=setInterval(tick,1000);
+  }
+
+  goEl.onclick=start;
+  resetEl.onclick=function(){
+    running=false; clearInterval(timer); timer=null;
+    goEl.textContent='开始'; stateEl.textContent='等着你坐下'; say('');
+    mode='work'; total=workMin*60; left=total; show();
+  };
+
+  function openPanel(){
+    inWork.value=workMin; inBreak.value=breakMin;
+    panelEl.classList.add('on');
+  }
+  editEl.onclick=openPanel;
+  timeEl.onclick=openPanel;
+  cancelEl.onclick=function(){panelEl.classList.remove('on');};
+  okEl.onclick=function(){
+    var w=parseInt(inWork.value,10)||workMin, b=parseInt(inBreak.value,10)||breakMin;
+    if(w<1)w=1; if(w>180)w=180;
+    if(b<1)b=1; if(b>60)b=60;
+    workMin=w; breakMin=b;
+    localStorage.setItem('lxwhalework',workMin);
+    localStorage.setItem('lxwhalebreak',breakMin);
+    panelEl.classList.remove('on');
+    if(running){
+      say('这一段按原来的走，下一段开始用新的时长。');
+    }else{
+      mode='work'; total=workMin*60; left=total; show();
+      stateEl.textContent='等着你坐下';
+      say('专注 '+workMin+' 分钟，休息 '+breakMin+' 分钟。');
+    }
+  };
+
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden && running){ say('先忙着，我等你回来。'); }
+    else if(!document.hidden && running){ say('回来了？还坐着吗。'); }
+  });
+
+  show(); showDays();
+})();
+</script>
+</body>
+</html>
