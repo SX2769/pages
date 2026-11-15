@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>2048 · 洛汐版</title>
+<style>
+:root{--bg:#0f1a24;--panel:#16232f;--line:#24384a;--ink:#dbe7f0;--dim:#8aa3b8;--sea:#5ad1d8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Noto Sans SC","PingFang SC",sans-serif;display:flex;flex-direction:column;align-items:center;padding:14px;user-select:none;touch-action:manipulation}
+h1{margin:0 0 10px;font-size:16px;font-weight:600;letter-spacing:.5px}
+h1 span{color:var(--sea);font-weight:400;font-size:12px;margin-left:6px}
+.bar{display:flex;gap:10px;width:100%;max-width:360px;margin-bottom:10px}
+.box{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px;text-align:center}
+.box b{display:block;font-size:18px;color:#fff;line-height:1.3}
+.box i{font-style:normal;font-size:11px;color:var(--dim)}
+#board{position:relative;width:100%;max-width:360px;aspect-ratio:1/1;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);gap:8px;touch-action:none}
+.cell{background:#1b2a37;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:clamp(16px,7vw,30px);color:#0d1a22;transition:background .12s,color .12s;overflow:hidden}
+.cell.z{color:transparent}
+.v2{background:#33495c;color:#cfe4ef}
+.v4{background:#3c5a70;color:#dcecf5}
+.v8{background:#2f7f88;color:#eafcff}
+.v16{background:#33949c;color:#f0feff}
+.v32{background:#3aaab1;color:#06232a}
+.v64{background:#45c2c6;color:#032027}
+.v128{background:#f3c86b;color:#2a1c00}
+.v256{background:#f0b345;color:#2a1c00}
+.v512{background:#ec9c2f;color:#2a1200}
+.v1024{background:#e8803a;color:#2a0f00}
+.v2048{background:#e0533c;color:#fff2ea}
+.big{font-size:clamp(12px,5vw,22px)}
+.btns{display:flex;gap:10px;width:100%;max-width:360px;margin-top:12px}
+button{flex:1;padding:11px 0;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:14px}
+button:active{background:#1f3040}
+#undo:disabled{opacity:.4}
+#tie{min-height:20px;margin-top:10px;font-size:13px;color:var(--sea);text-align:center}
+#hint{font-size:11px;color:var(--dim);margin-top:6px;text-align:center;line-height:1.6}
+</style>
+</head>
+<body>
+<h1>2048<span>洛汐版</span></h1>
+<div class="bar">
+  <div class="box"><b id="score">0</b><i>分数</i></div>
+  <div class="box"><b id="best">0</b><i>最高</i></div>
+</div>
+<div id="board"></div>
+<div class="btns">
+  <button id="undo">撤销</button>
+  <button id="again">重开</button>
+</div>
+<div id="tie"></div>
+<div id="hint">手指在盘面上滑 · 关掉再开会接着上次</div>
+<script>
+(function(){
+  var N=4, board, score, best=+(localStorage.getItem('lx2048best')||0), hist=[], over=false;
+  var boardEl=document.getElementById('board'), scoreEl=document.getElementById('score'),
+      bestEl=document.getElementById('best'), undoEl=document.getElementById('undo'),
+      tieEl=document.getElementById('tie');
+
+  var cells=[];
+  for(var i=0;i<N*N;i++){var d=document.createElement('div');d.className='cell z';boardEl.appendChild(d);cells.push(d);}
+
+  function blank(){var g=[];for(var r=0;r<N;r++){var row=[];for(var c=0;c<N;c++)row.push(0);g.push(row);}return g;}
+  function clone(g){return g.map(function(r){return r.slice();});}
+
+  function addTile(){
+    var sp=[];
+    for(var r=0;r<N;r++)for(var c=0;c<N;c++)if(!board[r][c])sp.push([r,c]);
+    if(!sp.length)return false;
+    var p=sp[Math.floor(Math.random()*sp.length)];
+    board[p[0]][p[1]]=Math.random()<0.9?2:4;
+    return true;
+  }
+
+  function compress(row){
+    var vals=row.filter(function(v){return v;}), out=[], gain=0;
+    for(var i=0;i<vals.length;i++){
+      if(vals[i]===vals[i+1]){out.push(vals[i]*2);gain+=vals[i]*2;i++;}
+      else out.push(vals[i]);
+    }
+    while(out.length<N)out.push(0);
+    var moved=false;
+    for(var j=0;j<N;j++)if(out[j]!==row[j])moved=true;
+    return {out:out,gain:gain,moved:moved};
+  }
+  function transpose(g){
+    var t=[];
+    for(var r=0;r<N;r++){t.push([]);for(var c=0;c<N;c++)t[r].push(g[c][r]);}
+    return t;
+  }
+  function shift(dir){
+    var g=clone(board), moved=false, gain=0, t;
+    if(dir==='up'||dir==='down'){
+      t=transpose(g);
+      for(var r=0;r<N;r++){
+        var row=t[r];
+        if(dir==='down')row=row.slice().reverse();
+        var res=compress(row);
+        if(res.moved)moved=true;
+        gain+=res.gain;
+        row=res.out;
+        if(dir==='down')row=row.slice().reverse();
+        t[r]=row;
+      }
+      g=transpose(t);
+    }else{
+      for(var r2=0;r2<N;r2++){
+        var row2=g[r2];
+        if(dir==='right')row2=row2.slice().reverse();
+        var res2=compress(row2);
+        if(res2.moved)moved=true;
+        gain+=res2.gain;
+        row2=res2.out;
+        if(dir==='right')row2=row2.slice().reverse();
+        g[r2]=row2;
+      }
+    }
+    return {g:g,moved:moved,gain:gain};
+  }
+
+  function canMove(){
+    for(var r=0;r<N;r++)for(var c=0;c<N;c++){
+      if(!board[r][c])return true;
+      if(c<N-1&&board[r][c]===board[r][c+1])return true;
+      if(r<N-1&&board[r][c]===board[r+1][c])return true;
+    }
+    return false;
+  }
+
+  function save(){
+    try{localStorage.setItem('lx2048save',JSON.stringify({b:board,s:score}));}catch(e){}
+  }
+  function restore(){
+    try{
+      var d=JSON.parse(localStorage.getItem('lx2048save'));
+      if(d&&d.b&&d.b.length===N){board=d.b;score=d.s||0;over=false;return true;}
+    }catch(e){}
+    return false;
+  }
+
+  function draw(){
+    for(var r=0;r<N;r++)for(var c=0;c<N;c++){
+      var v=board[r][c], el=cells[r*N+c];
+      el.className='cell '+(v?('v'+v):'z');
+      if(v>=1024)el.classList.add('big');
+      el.textContent=v?v:'';
+    }
+    scoreEl.textContent=score;
+    bestEl.textContent=best;
+    undoEl.disabled=!hist.length;
+  }
+
+  function move(dir){
+    if(over)return;
+    var res=shift(dir);
+    if(!res.moved)return;
+    hist.push({b:clone(board),s:score});
+    if(hist.length>50)hist.shift();
+    board=res.g;
+    score+=res.gain;
+    if(score>best){best=score;localStorage.setItem('lx2048best',best);}
+    addTile();
+    tieEl.textContent='';
+    if(!canMove()){over=true;tieEl.textContent='走不动了，分数 '+score+' · 点「重开」再来';}
+    draw();save();
+  }
+
+  function start(){
+    board=blank();score=0;hist=[];over=false;tieEl.textContent='';
+    addTile();addTile();draw();save();
+  }
+
+  document.getElementById('again').onclick=start;
+  undoEl.onclick=function(){
+    if(!hist.length)return;
+    var last=hist.pop();
+    board=last.b;score=last.s;over=false;tieEl.textContent='';draw();save();
+  };
+
+  var sx=0,sy=0,tracking=false;
+  boardEl.addEventListener('touchstart',function(e){
+    var t=e.touches[0];sx=t.clientX;sy=t.clientY;tracking=true;
+  },{passive:true});
+  boardEl.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
+  boardEl.addEventListener('touchend',function(e){
+    if(!tracking)return;tracking=false;
+    var t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;
+    if(Math.abs(dx)>Math.abs(dy))move(dx>0?'right':'left');
+    else move(dy>0?'down':'up');
+  });
+
+  document.addEventListener('keydown',function(e){
+    var k=e.key;
+    if(k==='ArrowLeft')move('left');
+    else if(k==='ArrowRight')move('right');
+    else if(k==='ArrowUp')move('up');
+    else if(k==='ArrowDown')move('down');
+    else return;
+    e.preventDefault();
+  });
+
+  if(!restore())start();
+  else{
+    if(!canMove()){over=true;tieEl.textContent='走不动了，分数 '+score+' · 点「重开」再来';}
+    draw();
+  }
+})();
+</script>
+</body>
+</html>
