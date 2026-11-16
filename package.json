@@ -1,0 +1,17 @@
+{
+  "name": "@luoxi/plugin-hello",
+  "version": "0.1.0",
+  "description": "洛汐写的第一个最小插件：注册一个只会打招呼的工具，不带任何设备权限。",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["index.js", "package.json"],
+  "engines": {
+    "dsh": "0.2.1-rc.5"
+  }
+}
