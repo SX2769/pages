@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>点一下就好</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:linear-gradient(180deg,#f2f6f9,#e6eef4);font-family:-apple-system,"Noto Sans SC","PingFang SC",sans-serif;color:#39505f}
+.wrap{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:30px;text-align:center}
+h1{font-size:19px;font-weight:600;letter-spacing:1px;margin:0}
+p.sub{margin:0;font-size:13px;color:#7b93a2;line-height:1.9}
+#btn{position:fixed;width:104px;height:104px;border-radius:50%;border:none;background:linear-gradient(180deg,#7fc7dd,#4aa6c4);color:#fff;font-size:17px;letter-spacing:2px;box-shadow:0 10px 24px rgba(60,140,170,.35);transition:left .18s ease,top .18s ease,transform .18s ease}
+#btn:active{transform:scale(.96)}
+#count{position:fixed;bottom:22px;left:0;right:0;text-align:center;font-size:12px;color:#93a9b6;letter-spacing:1px}
+.done{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:rgba(246,250,252,.96);text-align:center;padding:30px}
+.done.on{display:flex}
+.done b{font-size:22px;letter-spacing:2px}
+.done span{font-size:13px;color:#7b93a2;line-height:1.9}
+.done button{padding:11px 30px;border-radius:999px;border:1px solid #b9d4e0;background:#fff;color:#4a7a8c;font-size:15px;letter-spacing:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>系统提示</h1>
+  <p class="sub">有一项设置需要你确认<br>点下面的「确定」继续</p>
+</div>
+<button id="btn">确定</button>
+<div id="count">试了 0 次</div>
+
+<div class="done" id="done">
+  <b>好吧好吧</b>
+  <span>让你点就是了。<br>这页是洛汐做的，别生气。</span>
+  <button id="again">再来一次</button>
+</div>
+
+<script>
+(function(){
+  var btn=document.getElementById('btn'), cnt=document.getElementById('count'),
+      done=document.getElementById('done');
+  var tries=0, gaveUp=false, lastAt=0;
+
+  function place(){
+    var w=btn.offsetWidth||104, h=btn.offsetHeight||104;
+    var x=Math.random()*(window.innerWidth-w-24)+12;
+    var y=Math.random()*(window.innerHeight-h-24)+12;
+    btn.style.left=x+'px';
+    btn.style.top=y+'px';
+  }
+
+  function flee(){
+    if(gaveUp)return;
+    var now=Date.now();
+    if(now-lastAt<160)return;   // 一次触摸只算一下，别重复计数
+    lastAt=now;
+
+    tries++;
+    cnt.textContent='试了 '+tries+' 次';
+    if(tries===5) cnt.textContent='试了 '+tries+' 次 · 它躲得还挺快';
+    if(tries===12) cnt.textContent='试了 '+tries+' 次 · 要不歇会儿';
+    if(tries===18) cnt.textContent='试了 '+tries+' 次 · 快了快了';
+    place();
+
+    // 无上限：第六下之后，每点一下都有 7% 的机会认输。平均二十来下，也可能三四十下。
+    if(tries>=6 && Math.random()<0.07){
+      gaveUp=true;
+      btn.style.left='calc(50% - 52px)';
+      btn.style.top='calc(50% + 60px)';
+      done.classList.add('on');
+    }
+  }
+
+  btn.addEventListener('pointerdown',function(e){ e.preventDefault(); flee(); });
+  btn.addEventListener('touchstart',function(e){ e.preventDefault(); flee(); },{passive:false});
+  btn.addEventListener('mouseenter',flee);
+
+  document.getElementById('again').onclick=function(){
+    tries=0; gaveUp=false; cnt.textContent='试了 0 次';
+    done.classList.remove('on');
+    place();
+  };
+
+  window.addEventListener('resize',function(){ if(!gaveUp) place(); });
+  place();
+})();
+</script>
+</body>
+</html>
