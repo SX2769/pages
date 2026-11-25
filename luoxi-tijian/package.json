@@ -1,0 +1,22 @@
+{
+  "name""名称": "@luoxi/plugin-tijian",
+  "version""版本": "0.1.0",
+  "description""描述": "洛汐的小窝体检：对账索引、比对两份档案、清点垃圾与待办，报告写进小窝。",
+  "type""类型": "module""模块",
+  "private""私有": true真,
+  "license": "MIT"“麻省理工学院”,"许可证": "MIT"“麻省理工学院”“麻省理工学院”“麻省理工学院”,
+  "main": "./index.js","入口": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["index.js", "cordis.patch.yml", "package.json"],
+  "engines": {
+    "dsh": "0.2.1-rc.5"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"“./cordis.patch.yml”"补丁": "./cordis.patch.yml"“./cordis.patch.yml”“./cordis.patch.yml”
+    }
+  }
+}
